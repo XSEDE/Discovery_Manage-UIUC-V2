@@ -29,7 +29,7 @@ import django
 django.setup()
 from django.db import DataError, IntegrityError
 from django.utils.dateparse import parse_datetime
-from resource_cat.models import *
+from resource_v2.models import *
 from processing_status.process import ProcessingActivity
 
 import pdb
