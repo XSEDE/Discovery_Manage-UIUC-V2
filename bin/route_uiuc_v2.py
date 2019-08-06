@@ -376,7 +376,7 @@ class HandleLoad():
                                     ProviderID = ProviderID,
                                     ResourceGroup = ResourceGroup,
                                     Type = Type,
-                                    ShortDescription = item['short_description']
+                                    ShortDescription = item['short_description'],
                                     Description = item['resource_description'],
                                     QualityLevel = QualityLevel,
                                     LocalID = str(item['id']),
