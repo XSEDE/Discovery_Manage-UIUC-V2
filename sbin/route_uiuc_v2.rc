@@ -12,10 +12,10 @@
 
 # Change these lines to suit where you install your script and what you want to call it
 DAEMON_NAME=route_uiuc_v2
-DAEMON_DIR=/soft/warehouse-apps-1.0/Manage-UIUC/PROD
+DAEMON_DIR=/soft/warehouse-apps-1.0/Manage-UIUC-V2/PROD
 DAEMON_BIN=$DAEMON_DIR/bin/$DAEMON_NAME.py
-DAEMON_CONF=/soft/warehouse-apps-1.0/Manage-UIUC/conf/$DAEMON_NAME.conf
-DAEMON_LOG=/soft/warehouse-apps-1.0/Manage-UIUC/var/$DAEMON_NAME.daemon.log
+DAEMON_CONF=/soft/warehouse-apps-1.0/Manage-UIUC-V2/conf/$DAEMON_NAME.conf
+DAEMON_LOG=/soft/warehouse-apps-1.0/Manage-UIUC-V2/var/$DAEMON_NAME.daemon.log
 exec >$DAEMON_LOG 2>&1
 
 # Add any command line options for your daemon here
@@ -32,11 +32,11 @@ DAEMON_USER=software
 PYTHON_BASE=/soft/python/python-3.6.8-base
 export LD_LIBRARY_PATH=${PYTHON_BASE}/lib
 
-PYTHON_ROOT=/soft/warehouse-apps-1.0/Manage-UIUC/python
+PYTHON_ROOT=/soft/warehouse-apps-1.0/Manage-UIUC-V2/python
 source ${PYTHON_ROOT}/bin/activate
 
 export PYTHONPATH=$DAEMON_DIR/lib:/soft/warehouse-1.0/PROD/django_xsede_warehouse
-export DJANGO_CONF=/soft/warehouse-apps-1.0/Manage-UIUC/conf/django_xsede_warehouse.conf
+export DJANGO_CONF=/soft/warehouse-apps-1.0/Manage-UIUC-V2/conf/django_xsede_warehouse.conf
 export DJANGO_SETTINGS_MODULE=xsede_warehouse.settings
 
 do_start () {
