@@ -306,7 +306,7 @@ class HandleLoad():
         self.cur = {}   # Items currently in database
         self.new = {}   # New resources in document
         now_utc = datetime.now(utc)
-        for item in Resource.objects.filter(Affiliation__exact=self.Affiliation):
+        for item in ResourceV2.objects.filter(Affiliation__exact=self.Affiliation):
             self.cur[str(item.LocalID)] = item
         
         for new_id in new_items:
@@ -367,7 +367,7 @@ class HandleLoad():
                 Associations = None
             
             try:
-                model = Resource(ID=ID,
+                model = ResourceV2(ID=ID,
                                     Name = item['resource_name'],
                                     CreationTime = now_utc,
                                     Validity = None,
@@ -397,7 +397,7 @@ class HandleLoad():
             if id not in new_items:
                 try:
                     ID = 'urn:glue2:GlobalResource:{}.{}'.format(id, self.Affiliation)
-                    Resource.objects.get(pk=ID).delete()
+                    ResourceV2.objects.get(pk=ID).delete()
                     self.stats['Resource.Delete'] += 1
                     self.logger.info('Resource delete ID={}'.format(ID))
                 except (DataError, IntegrityError) as e:
@@ -408,14 +408,14 @@ class HandleLoad():
         self.cur = {}   # Items currently in database
         self.new = {}   # New resources in document
         now_utc = datetime.now(utc)
-        for item in ResourceProvider.objects.filter(Affiliation__exact=self.Affiliation):
+        for item in ResourceV2Provider.objects.filter(Affiliation__exact=self.Affiliation):
             self.cur[str(item.LocalID)] = item
         for new_id in new_items:
             item = new_items[new_id]
             ID = 'urn:glue2:GlobalResourceProvider:{}.{}'.format(item['id'], self.Affiliation)
 
             try:
-                model = ResourceProvider(ID=ID,
+                model = ResourceV2Provider(ID=ID,
                                     Name = item['name'],
                                     CreationTime=now_utc,
                                     Validity=None,
@@ -436,7 +436,7 @@ class HandleLoad():
             if id not in new_items:
                 try:
                     ID = 'urn:glue2:GlobalResourceProvider:{}.{}'.format(id, self.Affiliation)
-                    ResourceProvider.objects.get(pk=ID).delete()
+                    ResourceV2Provider.objects.get(pk=ID).delete()
                     self.stats['ResourceProvider.Delete'] += 1
                     self.logger.info('ResourceProvider delete ID={}'.format(ID))
                 except (DataError, IntegrityError) as e:
