@@ -303,7 +303,7 @@ class HandleLoad():
             DATA[GLOBALID].append(str(rowdict['associated_resource_id']))
         return(DATA)
 
-    def Retrieve_Curated_Guide(self, cursor):
+    def Retrieve_Guides(self, cursor):
         try:
             sql = 'SELECT * from curated_guide'
             cursor.execute(sql)
@@ -323,7 +323,7 @@ class HandleLoad():
             DATA[GLOBALID] = rowdict
         return(DATA)
 
-    def Retrieve_Curated_Guide_Resource(self, cursor):
+    def Retrieve_Guide_Resources(self, cursor):
         try:
             sql = 'SELECT * from curated_guide_resource'
             cursor.execute(sql)
@@ -335,7 +335,7 @@ class HandleLoad():
         DATA = {}
         for row in cursor.fetchall():
             rowdict = dict(zip(COLS, row))
-            GLOBALID = 'urn:glue2:GlobalGuideResource:{}.{}.{}'.format(rowdict.get('curated_guide_id', ''), format(rowdict.get('resource_id', ''), self.Affiliation)
+            GLOBALID = 'urn:glue2:GlobalGuideResource:{0}.{2}:{1}.{2}'.format(rowdict.get('curated_guide_id', ''), rowdict.get('resource_id', ''), self.Affiliation)
             DATA[GLOBALID] = rowdict
         return(DATA)
     
@@ -354,7 +354,7 @@ class HandleLoad():
             # Can't compare directly because tzinfo have different represenations in Python and Django
             if not self.args.ignore_dates:
                 try:
-                    cur_dtm = parse_datetime(self.cur[str(item['id'])].EntityJSON['last_updated'].replace(' ',''))
+                    cur_dtm = parse_datetime(self.cur[GLOBALID].EntityJSON['last_updated'].replace(' ',''))
                 except:
                     cur_dtm = datetime.utcnow()
                 try:
@@ -466,7 +466,7 @@ class HandleLoad():
                 return(False, msg)
                      
         for GLOBALID in self.cur:
-            if GLOALID not in new_items:
+            if GLOBALID not in new_items:
                 try:
                     ResourceV2Provider.objects.get(pk=GLOBALID).delete()
                     self.stats['ResourceProvider.Delete'] += 1
@@ -483,6 +483,10 @@ class HandleLoad():
             self.cur[item.ID] = item
         for GLOBALID in new_items:
             item = new_items[GLOBALID]
+            if 'created_at' in item and isinstance(item['created_at'], datetime):
+                item['created_at'] = item['created_at'].strftime('%Y-%m-%dT%H:%M:%S%z')
+            if 'updated_at' in item and isinstance(item['updated_at'], datetime):
+                item['updated_at'] = item['updated_at'].strftime('%Y-%m-%dT%H:%M:%S%z')
             try:
                 model = ResourceV2Guide(ID=GLOBALID,
                                     Name = item['title'],
@@ -511,22 +515,21 @@ class HandleLoad():
                     self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
         return(True, '')
 
-    def Warehouse_GuideResource(self, new_items):
+    def Warehouse_Guide_Resources(self, new_items):
         self.cur = {}   # Items currently in database
         self.new = {}   # New resources in document
         now_utc = datetime.now(utc)
         for item in ResourceV2GuideResource.objects.all():
-            if item.ID.endswith('.' + self.Affiliation)
-                 self.cur[item.ID] = item
+            if item.ID.endswith('.' + self.Affiliation):
+                self.cur[item.ID] = item
         for GLOBALID in new_items:
             item = new_items[GLOBALID]
             GUIDE_ID = 'urn:glue2:GlobalGuide:{}.{}'.format(item['curated_guide_id'], self.Affiliation)
             RESOURCE_ID = 'urn:glue2:GlobalResource:{}.{}'.format(item['resource_id'], self.Affiliation)
             try:
                 model = ResourceV2GuideResource(ID=GLOBALID,
-                                    Affiliation=self.Affiliation,
                                     CuratedGuideID=GUIDE_ID,
-                                    ResourceID=RESOURCE_ID
+                                    ResourceID=RESOURCE_ID,
                     )
                 model.save()
                 self.logger.debug('GuideResource save ID={}'.format(GLOBALID))
@@ -603,6 +606,26 @@ class HandleLoad():
             (rc, warehouse_msg) = self.Warehouse_Resources(INPUT, RESTAGS, RESASSC)
             self.end = datetime.now(utc)
             summary_msg = 'Processed Resource in {:.3f}/seconds: {}/updates, {}/deletes, {}/skipped'.format((self.end - self.start).total_seconds(), self.stats['Resource.Update'], self.stats['Resource.Delete'], self.stats['Resource.Skip'])
+            self.logger.info(summary_msg)
+
+            self.start = datetime.now(utc)
+            self.stats['Guide.Update'] = 0
+            self.stats['Guide.Delete'] = 0
+            self.stats['Guide.Skip'] = 0
+            INPUT = self.Retrieve_Guides(CURSOR)
+            (rc, warehouse_msg) = self.Warehouse_Guides(INPUT)
+            self.end = datetime.now(utc)
+            summary_msg = 'Processed Guide in {:.3f}/seconds: {}/updates, {}/deletes, {}/skipped'.format((self.end - self.start).total_seconds(), self.stats['Guide.Update'], self.stats['Guide.Delete'], self.stats['Guide.Skip'])
+            self.logger.info(summary_msg)
+
+            self.start = datetime.now(utc)
+            self.stats['GuideResource.Update'] = 0
+            self.stats['GuideResource.Delete'] = 0
+            self.stats['GuideResource.Skip'] = 0
+            INPUT = self.Retrieve_Guide_Resources(CURSOR)
+            (rc, warehouse_msg) = self.Warehouse_Guide_Resources(INPUT)
+            self.end = datetime.now(utc)
+            summary_msg = 'Processed Guide Resource in {:.3f}/seconds: {}/updates, {}/deletes, {}/skipped'.format((self.end - self.start).total_seconds(), self.stats['GuideResource.Update'], self.stats['GuideResource.Delete'], self.stats['GuideResource.Skip'])
             self.logger.info(summary_msg)
 
             self.Disconnect_Source(CURSOR)
