@@ -231,7 +231,8 @@ class HandleLoad():
                 rowdict['start_date_time'] = UTC_TZ.localize(rowdict['start_date_time'])
             if 'end_date_time' in rowdict and isinstance(rowdict['end_date_time'], datetime):
                 rowdict['end_date_time'] = UTC_TZ.localize(rowdict['end_date_time'])
-            DATA[str(rowdict['id'])] = rowdict
+            GLOBALID = 'urn:glue2:GlobalResource:{}.{}'.format(rowdict.get('id', ''), self.Affiliation)
+            DATA[GLOBALID] = rowdict
         return(DATA)
 
     def Retrieve_Providers(self, cursor):
@@ -246,7 +247,8 @@ class HandleLoad():
         DATA = {}
         for row in cursor.fetchall():
             rowdict = dict(zip(COLS, row))
-            DATA[str(rowdict['id'])] = rowdict
+            GLOBALID = 'urn:glue2:GlobalResourceProvider:{}.{}'.format(rowdict.get('id', ''), self.Affiliation)
+            DATA[GLOBALID] = rowdict
         return(DATA)
 
     def Retrieve_Resource_Tags(self, cursor):
@@ -274,14 +276,13 @@ class HandleLoad():
         resource_tags = {}
         for row in cursor.fetchall():
             rowdict = dict(zip(COLS, row))
-            id = str(rowdict['resource_id'])
-            if id not in resource_tags:
-                resource_tags[id] = []
+            GLOBALID = 'urn:glue2:GlobalResource:{}.{}'.format(rowdict.get('resource_id', ''), self.Affiliation)
+            if GLOBALID not in resource_tags:
+                resource_tags[GLOBALID] = []
             try:
-                resource_tags[id].append(tags[rowdict['tag_id']])
+                resource_tags[GLOBALID].append(tags[rowdict['tag_id']])
             except:
                 pass
-
         return(resource_tags)
 
     def Retrieve_Resource_Associations(self, cursor):
@@ -296,21 +297,57 @@ class HandleLoad():
         DATA = {}
         for row in cursor.fetchall():
             rowdict = dict(zip(COLS, row))
-            ID = str(rowdict['resource_id'])
-            if ID not in DATA:
-                DATA[ID] = []
-            DATA[ID].append(str(rowdict['associated_resource_id']))
+            GLOBALID = 'urn:glue2:GlobalResource:{}.{}'.format(rowdict.get('resource_id', ''), self.Affiliation)
+            if GLOBALID not in DATA:
+                DATA[GLOBALID] = []
+            DATA[GLOBALID].append(str(rowdict['associated_resource_id']))
         return(DATA)
 
+    def Retrieve_Curated_Guide(self, cursor):
+        try:
+            sql = 'SELECT * from curated_guide'
+            cursor.execute(sql)
+        except psycopg2.Error as e:
+            self.logger.error("Failed '{}' with {}: {}".format(sql, e.pgcode, e.pgerror))
+            exit(1)
+
+        COLS = [desc.name for desc in cursor.description]
+        DATA = {}
+        for row in cursor.fetchall():
+            rowdict = dict(zip(COLS, row))
+            if 'created_at' in rowdict and isinstance(rowdict['created_at'], datetime):
+                rowdict['created_at'] = UTC_TZ.localize(rowdict['created_at'])
+            if 'updated_at' in rowdict and isinstance(rowdict['updated_at'], datetime):
+                rowdict['updated_at'] = UTC_TZ.localize(rowdict['updated_at'])
+            GLOBALID = 'urn:glue2:GlobalGuide:{}.{}'.format(rowdict.get('id', ''), self.Affiliation)
+            DATA[GLOBALID] = rowdict
+        return(DATA)
+
+    def Retrieve_Curated_Guide_Resource(self, cursor):
+        try:
+            sql = 'SELECT * from curated_guide_resource'
+            cursor.execute(sql)
+        except psycopg2.Error as e:
+            self.logger.error("Failed '{}' with {}: {}".format(sql, e.pgcode, e.pgerror))
+            exit(1)
+
+        COLS = [desc.name for desc in cursor.description]
+        DATA = {}
+        for row in cursor.fetchall():
+            rowdict = dict(zip(COLS, row))
+            GLOBALID = 'urn:glue2:GlobalGuideResource:{}.{}.{}'.format(rowdict.get('curated_guide_id', ''), format(rowdict.get('resource_id', ''), self.Affiliation)
+            DATA[GLOBALID] = rowdict
+        return(DATA)
+    
     def Warehouse_Resources(self, new_items, item_tags, item_associations):
         self.cur = {}   # Items currently in database
         self.new = {}   # New resources in document
         now_utc = datetime.now(utc)
         for item in ResourceV2.objects.filter(Affiliation__exact=self.Affiliation):
-            self.cur[str(item.LocalID)] = item
+            self.cur[item.ID] = item
         
-        for new_id in new_items:
-            item = new_items[new_id]
+        for GLOBALID in new_items:
+            item = new_items[GLOBALID]
             # Convert warehouse last_update JSON string to datetime with timezone
             # Incoming last_update is a datetime with timezone
             # Once they are both datetimes with timezone, compare their strings
@@ -328,7 +365,6 @@ class HandleLoad():
                     self.stats['Resource.Skip'] += 1
                     continue
 
-            ID = 'urn:glue2:GlobalResource:{}.{}'.format(item['id'], self.Affiliation)
             if 'last_updated' in item and isinstance(item['last_updated'], datetime):
                 item['last_updated'] = item['last_updated'].strftime('%Y-%m-%dT%H:%M:%S%z')
             if 'start_date_time' in item and isinstance(item['start_date_time'], datetime):
@@ -367,7 +403,7 @@ class HandleLoad():
                 Associations = None
             
             try:
-                model = ResourceV2(ID=ID,
+                model = ResourceV2(ID=GLOBALID,
                                     Name = item['resource_name'],
                                     CreationTime = now_utc,
                                     Validity = None,
@@ -385,23 +421,22 @@ class HandleLoad():
                                     Associations = Associations,
                     )
                 model.save()
-                self.logger.debug('Resource save ID={}'.format(ID))
-                self.new[item['id']]=model
+                self.logger.debug('Resource save ID={}'.format(GLOBALID))
+                self.new[GLOBALID]=model
                 self.stats['Resource.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, ID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
                 self.logger.error(msg)
                 return(False, msg)
 
-        for id in self.cur:
-            if id not in new_items:
+        for GLOBALID in self.cur:
+            if GLOBALID not in new_items:
                 try:
-                    ID = 'urn:glue2:GlobalResource:{}.{}'.format(id, self.Affiliation)
-                    ResourceV2.objects.get(pk=ID).delete()
+                    ResourceV2.objects.get(pk=GLOBALID).delete()
                     self.stats['Resource.Delete'] += 1
-                    self.logger.info('Resource delete ID={}'.format(ID))
+                    self.logger.info('Resource delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, ID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
         return(True, '')
 
     def Warehouse_Providers(self, new_items):
@@ -409,13 +444,11 @@ class HandleLoad():
         self.new = {}   # New resources in document
         now_utc = datetime.now(utc)
         for item in ResourceV2Provider.objects.filter(Affiliation__exact=self.Affiliation):
-            self.cur[str(item.LocalID)] = item
-        for new_id in new_items:
-            item = new_items[new_id]
-            ID = 'urn:glue2:GlobalResourceProvider:{}.{}'.format(item['id'], self.Affiliation)
-
+            self.cur[item.ID] = item
+        for GLOBALID in new_items:
+            item = new_items[GLOBALID]
             try:
-                model = ResourceV2Provider(ID=ID,
+                model = ResourceV2Provider(ID=GLOBALID,
                                     Name = item['name'],
                                     CreationTime=now_utc,
                                     Validity=None,
@@ -424,25 +457,96 @@ class HandleLoad():
                                     LocalID=str(item['id']),
                     )
                 model.save()
-                self.logger.debug('ResourceProvider save ID={}'.format(ID))
-                self.new[item['id']]=model
+                self.logger.debug('ResourceProvider save ID={}'.format(GLOBALID))
+                self.new[GLOBALID]=model
                 self.stats['ResourceProvider.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, ID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                self.logger.error(msg)
+                return(False, msg)
+                     
+        for GLOBALID in self.cur:
+            if GLOALID not in new_items:
+                try:
+                    ResourceV2Provider.objects.get(pk=GLOBALID).delete()
+                    self.stats['ResourceProvider.Delete'] += 1
+                    self.logger.info('ResourceProvider delete ID={}'.format(GLOBALID))
+                except (DataError, IntegrityError) as e:
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+        return(True, '')
+
+    def Warehouse_Guides(self, new_items):
+        self.cur = {}   # Items currently in database
+        self.new = {}   # New resources in document
+        now_utc = datetime.now(utc)
+        for item in ResourceV2Guide.objects.filter(Affiliation__exact=self.Affiliation):
+            self.cur[item.ID] = item
+        for GLOBALID in new_items:
+            item = new_items[GLOBALID]
+            try:
+                model = ResourceV2Guide(ID=GLOBALID,
+                                    Name = item['title'],
+                                    CreationTime=now_utc,
+                                    Validity=None,
+                                    EntityJSON=item,
+                                    Affiliation=self.Affiliation,
+                                    LocalID=str(item['id']),
+                    )
+                model.save()
+                self.logger.debug('Guide save ID={}'.format(GLOBALID))
+                self.new[GLOBALID]=model
+                self.stats['Guide.Update'] += 1
+            except (DataError, IntegrityError) as e:
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
                 self.logger.error(msg)
                 return(False, msg)
 
-        for id in self.cur:
-            if id not in new_items:
+        for GLOBALID in self.cur:
+            if GLOBALID not in new_items:
                 try:
-                    ID = 'urn:glue2:GlobalResourceProvider:{}.{}'.format(id, self.Affiliation)
-                    ResourceV2Provider.objects.get(pk=ID).delete()
-                    self.stats['ResourceProvider.Delete'] += 1
-                    self.logger.info('ResourceProvider delete ID={}'.format(ID))
+                    ResourceV2Guide.objects.get(pk=GLOBALID).delete()
+                    self.stats['Guide.Delete'] += 1
+                    self.logger.info('Guide delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, ID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
         return(True, '')
 
+    def Warehouse_GuideResource(self, new_items):
+        self.cur = {}   # Items currently in database
+        self.new = {}   # New resources in document
+        now_utc = datetime.now(utc)
+        for item in ResourceV2GuideResource.objects.all():
+            if item.ID.endswith('.' + self.Affiliation)
+                 self.cur[item.ID] = item
+        for GLOBALID in new_items:
+            item = new_items[GLOBALID]
+            GUIDE_ID = 'urn:glue2:GlobalGuide:{}.{}'.format(item['curated_guide_id'], self.Affiliation)
+            RESOURCE_ID = 'urn:glue2:GlobalResource:{}.{}'.format(item['resource_id'], self.Affiliation)
+            try:
+                model = ResourceV2GuideResource(ID=GLOBALID,
+                                    Affiliation=self.Affiliation,
+                                    CuratedGuideID=GUIDE_ID,
+                                    ResourceID=RESOURCE_ID
+                    )
+                model.save()
+                self.logger.debug('GuideResource save ID={}'.format(GLOBALID))
+                self.new[GLOBALID]=model
+                self.stats['GuideResource.Update'] += 1
+            except (DataError, IntegrityError) as e:
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                self.logger.error(msg)
+                return(False, msg)
+
+        for GLOBALID in self.cur:
+            if GLOBALID not in new_items:
+                try:
+                    ResourceV2GuideResource.objects.get(pk=GLOBALID).delete()
+                    self.stats['GuideResource.Delete'] += 1
+                    self.logger.info('GuideResource delete ID={}'.format(GLOBALID))
+                except (DataError, IntegrityError) as e:
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+        return(True, '')
+                     
     def SaveDaemonLog(self, path):
         # Save daemon log file using timestamp only if it has anything unexpected in it
         try:
