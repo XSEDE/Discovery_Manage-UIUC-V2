@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Load UIUC resources information from a source (database) to a destination (warehouse)
 import os
