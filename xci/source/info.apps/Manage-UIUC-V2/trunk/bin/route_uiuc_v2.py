@@ -425,7 +425,7 @@ class HandleLoad():
                 self.new[GLOBALID]=model
                 self.stats['Resource.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e)
                 self.logger.error(msg)
                 return(False, msg)
 
@@ -436,7 +436,7 @@ class HandleLoad():
                     self.stats['Resource.Delete'] += 1
                     self.logger.info('Resource delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e))
         return(True, '')
 
     def Warehouse_Providers(self, new_items):
@@ -461,7 +461,7 @@ class HandleLoad():
                 self.new[GLOBALID]=model
                 self.stats['ResourceProvider.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e)
                 self.logger.error(msg)
                 return(False, msg)
                      
@@ -472,7 +472,7 @@ class HandleLoad():
                     self.stats['ResourceProvider.Delete'] += 1
                     self.logger.info('ResourceProvider delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e))
         return(True, '')
 
     def Warehouse_Guides(self, new_items):
@@ -501,7 +501,7 @@ class HandleLoad():
                 self.new[GLOBALID]=model
                 self.stats['Guide.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e)
                 self.logger.error(msg)
                 return(False, msg)
 
@@ -512,7 +512,7 @@ class HandleLoad():
                     self.stats['Guide.Delete'] += 1
                     self.logger.info('Guide delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e))
         return(True, '')
 
     def Warehouse_Guide_Resources(self, new_items):
@@ -536,7 +536,7 @@ class HandleLoad():
                 self.new[GLOBALID]=model
                 self.stats['GuideResource.Update'] += 1
             except (DataError, IntegrityError) as e:
-                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e.message)
+                msg = '{} saving ID={}: {}'.format(type(e).__name__, GLOBALID, e)
                 self.logger.error(msg)
                 return(False, msg)
 
@@ -547,7 +547,7 @@ class HandleLoad():
                     self.stats['GuideResource.Delete'] += 1
                     self.logger.info('GuideResource delete ID={}'.format(GLOBALID))
                 except (DataError, IntegrityError) as e:
-                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e.message))
+                    self.logger.error('{} deleting ID={}: {}'.format(type(e).__name__, GLOBALID, e))
         return(True, '')
                      
     def SaveDaemonLog(self, path):
