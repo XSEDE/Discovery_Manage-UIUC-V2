@@ -410,6 +410,7 @@ class HandleLoad():
                 self.logger.warning('Truncating Resource Topics longer than 1000 ID={}'.format(GLOBALID))
             if Keywords and len(Keywords) > 1000:
                 self.logger.warning('Truncating Resource Keywords longer than 1000 ID={}'.format(GLOBALID))
+                Keywords = Keywords[:1000]
                
             try:
                 model = ResourceV2(ID=GLOBALID,
@@ -426,7 +427,7 @@ class HandleLoad():
                                     QualityLevel = QualityLevel,
                                     LocalID = str(item['id']),
                                     Topics = item['topics'][:1000],
-                                    Keywords = Keywords[:1000],
+                                    Keywords = Keywords,
                                     Associations = Associations,
                     )
                 model.save()
