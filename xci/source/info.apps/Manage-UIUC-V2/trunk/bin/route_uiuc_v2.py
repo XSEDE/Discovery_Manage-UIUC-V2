@@ -402,12 +402,15 @@ class HandleLoad():
             except:
                 Associations = None
             
-            if len(item['short_description']) > 1000:
+            if item['short_description'] and len(item['short_description']) > 1000:
                 self.logger.warning('Truncating Resource ShortDescription longer than 1000 ID={}'.format(GLOBALID))
-            if len(item['resource_description']) > 24000:
+                item['short_description'] = item['short_description'][:1000]
+            if item['resource_description'] and len(item['resource_description']) > 24000:
                 self.logger.warning('Truncating Resource Description longer than 24000 ID={}'.format(GLOBALID))
-            if len(item['topics']) > 1000:
+                item['resource_description'] = item['resource_description'][:24000]
+            if item['topics'] and len(item['topics']) > 1000:
                 self.logger.warning('Truncating Resource Topics longer than 1000 ID={}'.format(GLOBALID))
+                item['topics'] = item['topics'][:1000]
             if Keywords and len(Keywords) > 1000:
                 self.logger.warning('Truncating Resource Keywords longer than 1000 ID={}'.format(GLOBALID))
                 Keywords = Keywords[:1000]
@@ -422,11 +425,11 @@ class HandleLoad():
                                     ProviderID = ProviderID,
                                     ResourceGroup = ResourceGroup,
                                     Type = Type,
-                                    ShortDescription = item['short_description'][:1000],
-                                    Description = item['resource_description'][:24000],
+                                    ShortDescription = item['short_description'],
+                                    Description = item['resource_description'],
                                     QualityLevel = QualityLevel,
                                     LocalID = str(item['id']),
-                                    Topics = item['topics'][:1000],
+                                    Topics = item['topics'],
                                     Keywords = Keywords,
                                     Associations = Associations,
                     )
