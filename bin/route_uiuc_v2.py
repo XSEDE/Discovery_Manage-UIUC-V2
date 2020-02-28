@@ -402,6 +402,15 @@ class HandleLoad():
             except:
                 Associations = None
             
+            if len(item['short_description']) > 1000:
+               self.logger.warning('Truncating Resource ShortDescription longer than 1000 ID={}'.format(GLOBALID))
+            if len(item['resource_description']) > 24000:
+               self.logger.warning('Truncating Resource Description longer than 24000 ID={}'.format(GLOBALID))
+            if len(item['topics']) > 1000:
+               self.logger.warning('Truncating Resource Topics longer than 1000 ID={}'.format(GLOBALID))
+            if len(Keywords) > 1000:
+               self.logger.warning('Truncating Resource Keywords longer than 1000 ID={}'.format(GLOBALID))
+               
             try:
                 model = ResourceV2(ID=GLOBALID,
                                     Name = item['resource_name'],
@@ -412,12 +421,12 @@ class HandleLoad():
                                     ProviderID = ProviderID,
                                     ResourceGroup = ResourceGroup,
                                     Type = Type,
-                                    ShortDescription = item['short_description'],
-                                    Description = item['resource_description'],
+                                    ShortDescription = item['short_description'][:1000],
+                                    Description = item['resource_description'][:24000],
                                     QualityLevel = QualityLevel,
                                     LocalID = str(item['id']),
-                                    Topics = item['topics'],
-                                    Keywords = Keywords,
+                                    Topics = item['topics'][:1000],
+                                    Keywords = Keywords[:1000],
                                     Associations = Associations,
                     )
                 model.save()
