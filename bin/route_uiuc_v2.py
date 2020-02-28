@@ -403,13 +403,13 @@ class HandleLoad():
                 Associations = None
             
             if len(item['short_description']) > 1000:
-               self.logger.warning('Truncating Resource ShortDescription longer than 1000 ID={}'.format(GLOBALID))
+                self.logger.warning('Truncating Resource ShortDescription longer than 1000 ID={}'.format(GLOBALID))
             if len(item['resource_description']) > 24000:
-               self.logger.warning('Truncating Resource Description longer than 24000 ID={}'.format(GLOBALID))
+                self.logger.warning('Truncating Resource Description longer than 24000 ID={}'.format(GLOBALID))
             if len(item['topics']) > 1000:
-               self.logger.warning('Truncating Resource Topics longer than 1000 ID={}'.format(GLOBALID))
-            if len(Keywords) > 1000:
-               self.logger.warning('Truncating Resource Keywords longer than 1000 ID={}'.format(GLOBALID))
+                self.logger.warning('Truncating Resource Topics longer than 1000 ID={}'.format(GLOBALID))
+            if Keywords and len(Keywords) > 1000:
+                self.logger.warning('Truncating Resource Keywords longer than 1000 ID={}'.format(GLOBALID))
                
             try:
                 model = ResourceV2(ID=GLOBALID,
