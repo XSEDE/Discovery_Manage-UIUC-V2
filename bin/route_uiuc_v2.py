@@ -13,7 +13,7 @@ import datetime
 from datetime import datetime, tzinfo, timedelta
 from time import sleep
 import pytz
-Central = pytz.timezone("US/Central")
+Central_TZ = pytz.timezone("US/Central")
 UTC_TZ = pytz.utc
 
 try:
@@ -226,11 +226,11 @@ class HandleLoad():
             if rowdict.get('record_status', None) not in [1, 2]:
                 continue
             if 'last_updated' in rowdict and isinstance(rowdict['last_updated'], datetime):
-                rowdict['last_updated'] = UTC_TZ.localize(rowdict['last_updated'])
+                rowdict['last_updated'] = Central_TZ.localize(rowdict['last_updated'])
             if 'start_date_time' in rowdict and isinstance(rowdict['start_date_time'], datetime):
-                rowdict['start_date_time'] = UTC_TZ.localize(rowdict['start_date_time'])
+                rowdict['start_date_time'] = Central_TZ.localize(rowdict['start_date_time'])
             if 'end_date_time' in rowdict and isinstance(rowdict['end_date_time'], datetime):
-                rowdict['end_date_time'] = UTC_TZ.localize(rowdict['end_date_time'])
+                rowdict['end_date_time'] = Central_TZ.localize(rowdict['end_date_time'])
             GLOBALID = 'urn:glue2:GlobalResource:{}.{}'.format(rowdict.get('id', ''), self.Affiliation)
             DATA[GLOBALID] = rowdict
         return(DATA)
@@ -316,9 +316,9 @@ class HandleLoad():
         for row in cursor.fetchall():
             rowdict = dict(zip(COLS, row))
             if 'created_at' in rowdict and isinstance(rowdict['created_at'], datetime):
-                rowdict['created_at'] = UTC_TZ.localize(rowdict['created_at'])
+                rowdict['created_at'] = Central_TZ.localize(rowdict['created_at'])
             if 'updated_at' in rowdict and isinstance(rowdict['updated_at'], datetime):
-                rowdict['updated_at'] = UTC_TZ.localize(rowdict['updated_at'])
+                rowdict['updated_at'] = Central_TZ.localize(rowdict['updated_at'])
             GLOBALID = 'urn:glue2:GlobalGuide:{}.{}'.format(rowdict.get('id', ''), self.Affiliation)
             DATA[GLOBALID] = rowdict
         return(DATA)
