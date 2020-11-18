@@ -1,4 +1,4 @@
-# XSEDE Information Services - Manage-UIUC-V2
+# Manage-UIUC-V2 Router for XSEDE Information Services
 
 Synchronize UIUC Resources to the Information Services cross-institutional Resources Catalog Version 2.
 
