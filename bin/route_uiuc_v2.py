@@ -80,8 +80,8 @@ class HandleLoad():
                             help='Ignore dates and force full resource refresh')
         parser.add_argument('-l', '--log', action='store', \
                             help='Logging level (default=warning)')
-        parser.add_argument('-c', '--config', action='store', default='./route_uiuc.conf', \
-                            help='Configuration file default=./route_uiuc.conf')
+        parser.add_argument('-c', '--config', action='store', default='./route_uiuc_v2.conf', \
+                            help='Configuration file default=./route_uiuc_v2.conf')
         parser.add_argument('--verbose', action='store_true', \
                             help='Verbose output')
         parser.add_argument('--pdb', action='store_true', \
